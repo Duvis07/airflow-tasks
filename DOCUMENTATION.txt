@@ -26,7 +26,66 @@ c) Escalabilidad:
    - Manejo de múltiples flujos de trabajo
    - Control de concurrencia
 
-3. ESTRUCTURA DEL PROYECTO
+3. CONFIGURACIÓN DE DOCKER
+-------------------------
+El proyecto utiliza Docker para garantizar un entorno consistente y reproducible:
+
+a) Componentes Docker:
+   - Airflow Webserver: Interfaz de usuario
+   - Airflow Scheduler: Programador de tareas
+   - Airflow Worker: Ejecutor de tareas
+   - PostgreSQL: Base de datos de metadatos de Airflow
+   - Redis: Cola de mensajes para workers
+
+b) docker-compose.yaml:
+   ```yaml
+   services:
+     webserver:
+       image: apache/airflow:2.7.1
+       ports:
+         - "8080:8080"
+       volumes:
+         - ./dags:/opt/airflow/dags
+         - ./scripts:/opt/airflow/scripts
+       depends_on:
+         - postgres
+         - redis
+
+     scheduler:
+       image: apache/airflow:2.7.1
+       volumes:
+         - ./dags:/opt/airflow/dags
+         - ./scripts:/opt/airflow/scripts
+       depends_on:
+         - webserver
+
+     worker:
+       image: apache/airflow:2.7.1
+       volumes:
+         - ./dags:/opt/airflow/dags
+         - ./scripts:/opt/airflow/scripts
+       depends_on:
+         - scheduler
+   ```
+
+c) Volúmenes Montados:
+   - /dags: Contiene los archivos DAG
+   - /scripts: Contiene los scripts Python
+   - /data: Almacena archivos CSV y base de datos
+
+d) Comandos Docker:
+   ```bash
+   # Iniciar servicios
+   docker-compose up -d
+
+   # Ver logs
+   docker-compose logs -f
+
+   # Detener servicios
+   docker-compose down
+   ```
+
+4. ESTRUCTURA DEL PROYECTO
 -------------------------
 El proyecto sigue una arquitectura de medallón (Bronze, Silver, Gold):
 
@@ -47,7 +106,7 @@ b) Archivos Principales:
    - cleaning.py: Creación de tablas silver
    - transform.py: Análisis y tablas gold
 
-4. COMPONENTES DEL PIPELINE
+5. COMPONENTES DEL PIPELINE
 --------------------------
 a) Extract (extract.py):
    - Función: extract_data()
@@ -80,7 +139,7 @@ d) Transform (transform.py):
      * Top 10 estados por ingresos
      * Métricas de entrega
 
-5. FLUJO DE DATOS
+6. FLUJO DE DATOS
 ----------------
 Bronze → Silver → Gold
 
@@ -99,7 +158,7 @@ c) Nivel Gold:
    - Métricas de negocio
    - Tablas analíticas
 
-6. CONFIGURACIÓN DEL DAG
+7. CONFIGURACIÓN DEL DAG
 -----------------------
 - Nombre: etl_olist
 - Frecuencia: Cada 5 minutos
@@ -108,7 +167,7 @@ c) Nivel Gold:
   * catchup=False: No ejecuta DAGs históricos
   * Reintentos automáticos en caso de fallo
 
-7. DEPENDENCIAS ENTRE TAREAS
+8. DEPENDENCIAS ENTRE TAREAS
 ---------------------------
 extract_data → load_data → cleaning_data → transform_data
 
@@ -117,7 +176,7 @@ Esta secuencia asegura que:
 - Las tablas bronze existan antes de crear silver
 - Las tablas silver estén listas para análisis
 
-8. MONITOREO Y MANTENIMIENTO
+9. MONITOREO Y MANTENIMIENTO
 ---------------------------
 a) Monitoreo:
    - Interfaz web de Airflow (localhost:8080)
@@ -129,7 +188,7 @@ b) Mantenimiento:
    - Ajuste de parámetros según necesidad
    - Actualización de análisis
 
-9. CONCLUSIONES
+10. CONCLUSIONES
 --------------
 Este pipeline ETL automatizado proporciona:
 - Datos actualizados cada 5 minutos
