@@ -31,47 +31,56 @@ c) Escalabilidad:
 El proyecto utiliza Docker para garantizar un entorno consistente y reproducible:
 
 a) Componentes Docker:
-   - Airflow Webserver: Interfaz de usuario
+   - Airflow Webserver: Interfaz de usuario (puerto 8080)
    - Airflow Scheduler: Programador de tareas
-   - Airflow Worker: Ejecutor de tareas
-   - PostgreSQL: Base de datos de metadatos de Airflow
-   - Redis: Cola de mensajes para workers
+   - PostgreSQL: Base de datos para los metadatos de Airflow
+   - LocalExecutor: Ejecutor local de Airflow (no requiere Redis)
 
 b) docker-compose.yaml:
    ```yaml
    services:
+     postgres:
+       image: postgres:13
+       environment:
+         - POSTGRES_USER=airflow
+         - POSTGRES_PASSWORD=airflow
+         - POSTGRES_DB=airflow
+
      webserver:
        image: apache/airflow:2.7.1
-       ports:
-         - "8080:8080"
+       environment:
+         - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+         - AIRFLOW__CORE__EXECUTOR=LocalExecutor
        volumes:
          - ./dags:/opt/airflow/dags
          - ./scripts:/opt/airflow/scripts
+         - ./dags/data:/opt/airflow/dags/data
        depends_on:
          - postgres
-         - redis
 
      scheduler:
        image: apache/airflow:2.7.1
+       environment:
+         - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+         - AIRFLOW__CORE__EXECUTOR=LocalExecutor
        volumes:
          - ./dags:/opt/airflow/dags
          - ./scripts:/opt/airflow/scripts
+         - ./dags/data:/opt/airflow/dags/data
        depends_on:
-         - webserver
-
-     worker:
-       image: apache/airflow:2.7.1
-       volumes:
-         - ./dags:/opt/airflow/dags
-         - ./scripts:/opt/airflow/scripts
-       depends_on:
-         - scheduler
+         - postgres
    ```
 
 c) Volúmenes Montados:
-   - /dags: Contiene los archivos DAG
+   - /dags: Contiene los archivos DAG y datos
    - /scripts: Contiene los scripts Python
-   - /data: Almacena archivos CSV y base de datos
+   - /logs: Almacena los logs de Airflow
+   - /plugins: Para plugins personalizados de Airflow
+
+d) Configuración Importante:
+   - LocalExecutor: Ejecutor simple para entornos de desarrollo
+   - PostgreSQL: Base de datos para metadatos de Airflow
+   - Dependencias adicionales: requests, pandas
 
 d) Comandos Docker:
    ```bash
