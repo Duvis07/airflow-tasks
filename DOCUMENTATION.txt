@@ -33,8 +33,19 @@ El proyecto utiliza Docker para garantizar un entorno consistente y reproducible
 a) Componentes Docker:
    - Airflow Webserver: Interfaz de usuario (puerto 8080)
    - Airflow Scheduler: Programador de tareas
-   - PostgreSQL: Base de datos para los metadatos de Airflow
+   - PostgreSQL: Solo para metadatos internos de Airflow
    - LocalExecutor: Ejecutor local de Airflow (no requiere Redis)
+
+b) Bases de Datos:
+   - SQLite (ecommerce.db):
+     * Almacena todos los datos del ETL
+     * Contiene tablas bronze, silver y gold
+     * Ubicada en /opt/airflow/dags/data/
+   
+   - PostgreSQL:
+     * Solo usado internamente por Airflow
+     * Almacena metadatos del scheduler
+     * No contiene datos del negocio
 
 b) docker-compose.yaml:
    ```yaml
