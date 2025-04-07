@@ -1,0 +1,144 @@
+DOCUMENTACIÓN DEL PROYECTO ETL CON APACHE AIRFLOW
+=============================================
+
+1. INTRODUCCIÓN
+--------------
+Este proyecto implementa un pipeline ETL (Extract, Transform, Load) utilizando Apache Airflow para procesar datos del e-commerce Olist. El objetivo principal es automatizar la extracción, transformación y carga de datos para generar insights de negocio.
+
+2. ¿POR QUÉ APACHE AIRFLOW?
+--------------------------
+Apache Airflow es una plataforma de orquestación de flujos de trabajo que ofrece:
+
+a) Programación y Monitoreo:
+   - Programación de tareas mediante expresiones cron
+   - Interfaz web para monitorear ejecuciones
+   - Visualización de dependencias entre tareas
+   - Registro detallado de ejecuciones
+
+b) Flexibilidad:
+   - Definición de flujos como código Python (DAGs)
+   - Fácil integración con diferentes tecnologías
+   - Manejo de dependencias entre tareas
+   - Reintento automático de tareas fallidas
+
+c) Escalabilidad:
+   - Ejecución distribuida de tareas
+   - Manejo de múltiples flujos de trabajo
+   - Control de concurrencia
+
+3. ESTRUCTURA DEL PROYECTO
+-------------------------
+El proyecto sigue una arquitectura de medallón (Bronze, Silver, Gold):
+
+a) Directorios:
+   /dags/
+     - Definiciones de DAGs de Airflow
+     - Archivos de configuración
+   /scripts/
+     - Módulos Python para cada etapa del ETL
+   /data/
+     - bronze/: Datos crudos en CSV
+     - ecommerce.db: Base de datos SQLite
+
+b) Archivos Principales:
+   - etl_olist.py: Definición del DAG
+   - extract.py: Descarga de datos
+   - load.py: Carga en tablas bronze
+   - cleaning.py: Creación de tablas silver
+   - transform.py: Análisis y tablas gold
+
+4. COMPONENTES DEL PIPELINE
+--------------------------
+a) Extract (extract.py):
+   - Función: extract_data()
+   - Objetivo: Descargar datos de Google Drive
+   - Características:
+     * Manejo de reintentos en descargas
+     * Validación de archivos
+     * Almacenamiento en directorio bronze
+
+b) Load (load.py):
+   - Función: load_data()
+   - Objetivo: Cargar datos en SQLite
+   - Características:
+     * Creación automática de directorios
+     * Validación de archivos
+     * Carga en tablas bronze
+
+c) Clean (cleaning.py):
+   - Función: clean_data()
+   - Objetivo: Crear tablas silver
+   - Características:
+     * Copia limpia de datos
+     * Manejo de nombres de tablas
+     * Gestión de errores
+
+d) Transform (transform.py):
+   - Función: transform_data()
+   - Objetivo: Crear análisis de negocio
+   - Análisis implementados:
+     * Top 10 estados por ingresos
+     * Métricas de entrega
+
+5. FLUJO DE DATOS
+----------------
+Bronze → Silver → Gold
+
+a) Nivel Bronze:
+   - Datos crudos en CSV
+   - Sin transformaciones
+   - Almacenamiento temporal
+
+b) Nivel Silver:
+   - Datos limpios
+   - Estructura optimizada
+   - Listos para análisis
+
+c) Nivel Gold:
+   - Datos agregados
+   - Métricas de negocio
+   - Tablas analíticas
+
+6. CONFIGURACIÓN DEL DAG
+-----------------------
+- Nombre: etl_olist
+- Frecuencia: Cada 5 minutos
+- Configuraciones clave:
+  * max_active_runs=1: Evita ejecuciones paralelas
+  * catchup=False: No ejecuta DAGs históricos
+  * Reintentos automáticos en caso de fallo
+
+7. DEPENDENCIAS ENTRE TAREAS
+---------------------------
+extract_data → load_data → cleaning_data → transform_data
+
+Esta secuencia asegura que:
+- Los datos estén disponibles antes de cargarlos
+- Las tablas bronze existan antes de crear silver
+- Las tablas silver estén listas para análisis
+
+8. MONITOREO Y MANTENIMIENTO
+---------------------------
+a) Monitoreo:
+   - Interfaz web de Airflow (localhost:8080)
+   - Logs por tarea
+   - Estado de ejecuciones
+
+b) Mantenimiento:
+   - Revisión periódica de logs
+   - Ajuste de parámetros según necesidad
+   - Actualización de análisis
+
+9. CONCLUSIONES
+--------------
+Este pipeline ETL automatizado proporciona:
+- Datos actualizados cada 5 minutos
+- Análisis de negocio en tiempo real
+- Estructura escalable y mantenible
+- Monitoreo completo del proceso
+
+La arquitectura de medallón y el uso de Airflow permiten:
+- Trazabilidad de datos
+- Facilidad de mantenimiento
+- Escalabilidad del pipeline
+- Confiabilidad en el procesamiento
